@@ -1,0 +1,27 @@
+<launch>   
+  <param name="/use_sim_time" value="true"/>
+
+  <!-- start PointCloud people detection -->
+    <node name="velodyne_people" pkg="pff_sem" type="velodyne_people">
+        <param name="robot_height" value="0.6"/> <!-- Default 1.0 (100cm) -->
+        <param name="sensor_height" value="0.57"/> <!-- Default 0.57 (57cm) -->
+        <param name="horizontal_fov" value="360"/> <!-- Default 360° -->
+        <param name="resolution" value="0.2"/> <!-- Default 0.2° -->
+        <param name="legs_begin" value="0.25"/> <!-- Default 0.25 (25cm) -->
+        <param name="legs_end" value="0.65"/> <!-- Default 0.60 (60cm) -->
+        <param name="trunk_begin" value="0.66"/> <!-- Default 0.8 (80cm) -->
+        <param name="trunk_end" value="2.00"/> <!-- Default 1.50 (150cm) -->
+        
+        <param name="topic_pub_people" value="/People_PC"/> <!-- Default "/People_PC" -->
+        <param name="topic_pub_legs" value="/Legs_PC"/> <!-- Default "/Legs_PC" -->
+        <param name="topic_pub_trunk" value="/Trunk_PC"/> <!-- Default "/Trunk_PC" -->
+        <param name="sensor_topic_sub" value="/velodyne_points"/> <!-- Default "/velodyne_points" -->
+        <param name="pose_topic_sub" value="/odom"/> <!-- Default "/amcl_pose" -->
+        <param name="map_topic_sub" value="/map"/> <!-- Default "/map" -->
+        <param name="frame_id" value="map"/> <!-- Default "map" -->        
+    </node> 
+ 
+
+
+
+</launch>

@@ -1,0 +1,95 @@
+<launch>   
+
+  <!-- start nodelet manager and driver nodelets -->
+  <include file="$(find velodyne_driver)/launch/nodelet_manager.launch">
+    <arg name="device_ip" value=""/>
+    <arg name="frame_id" value="base_link"/>
+    <arg name="manager" value="velodyne_nodelet_manager" />
+    <arg name="model" value="VLP16"/>
+    <arg name="pcap" value=""/>
+    <arg name="port" value="2368"/>
+    <arg name="read_fast" value="false"/>
+    <arg name="read_once" value="false"/>
+    <arg name="repeat_delay" value="0.0"/>
+    <arg name="rpm" value="600"/>
+    <arg name="gps_time" value="false"/>
+    <arg name="cut_angle" value="-0.01"/>
+    <arg name="timestamp_first_packet" value="false"/>
+  </include>
+
+  <!-- start cloud nodelet -->
+  <include file="$(find velodyne_pointcloud)/launch/transform_nodelet.launch">
+    <arg name="model" value="VLP16"/>
+    <arg name="calibration" value="$(find velodyne_pointcloud)/params/VLP16db.yaml"/> <!-- Set correct velodyne reference -->
+    <arg name="manager" value="velodyne_nodelet_manager" />
+    <arg name="max_range" value="130.0"/>
+    <arg name="min_range" value="0.4"/>
+    <arg name="organize_cloud" value="false"/>
+  </include>
+
+  <!-- start PointCloud Fast Filter -->
+  <node name="velodyne" pkg="pff" type="velodyne">
+    <param name="robot_height" value="0.6"/> <!-- Default 1.0 (100cm) -->
+    <param name="sensor_height" value="0.57"/> <!-- Default 0.57 (57cm) -->
+    <param name="horizontal_fov" value="360"/> <!-- Default 360° -->
+    <param name="resolution" value="0.2"/> <!-- Default 0.2° -->
+    <param name="topic_pub" value="/scan"/> <!-- Default /scan -->
+    <param name="topic_sub" value="/velodyne_points"/> <!-- Default velodyne_points -->
+    <param name="frame_id" value="base_link"/> <!-- Default base_scan -->
+  </node> 
+
+  <!-- start Turtlebot -->
+  <include file="$(find turtlebot_bringup)/launch/minimal.launch"/>
+
+  <arg name="3d_sensor" default="$(env TURTLEBOT_3D_SENSOR)"/>  <!-- r200, kinect, asus_xtion_pro -->
+  
+
+  <!-- Map server -->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find pff_sem)/maps/newmap2.yaml" />
+
+  <!-- AMCL -->
+  <arg name="custom_amcl_launch_file" default="$(find turtlebot_navigation)/launch/includes/amcl/amcl.launch.xml"/>
+  <!--arg name="initial_pose_x" default="111.92035675"/>
+  <arg name="initial_pose_y" default="99.4828338623"/>
+  <arg name="initial_pose_a" default="-0.463698840476663"/--><!-- New map-->
+  <arg name="initial_pose_x" default="21.3968906403"/>
+  <arg name="initial_pose_y" default="7.80321502686"/>
+  <arg name="initial_pose_a" default="-0.5812247201566632"/><!-- New map2-->
+  <include file="$(arg custom_amcl_launch_file)">
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+  </include>
+
+  <!-- Move base -->
+  <arg name="custom_param_file" default="$(find turtlebot_navigation)/param/$(arg 3d_sensor)_costmap_params.yaml"/>
+  <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
+    <arg name="custom_param_file" value="$(arg custom_param_file)"/>
+  </include>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pff_sem)/rviz_cfg/semantic.rviz"/>
+
+  <!-- start PointCloud people detection -->
+    <node name="velodyne_people" pkg="pff_sem" type="velodyne_people">
+        <param name="robot_height" value="0.6"/> <!-- Default 1.0 (100cm) -->
+        <param name="sensor_height" value="0.57"/> <!-- Default 0.57 (57cm) -->
+        <param name="horizontal_fov" value="360"/> <!-- Default 360° -->
+        <param name="resolution" value="0.2"/> <!-- Default 0.2° -->
+        <param name="legs_begin" value="0.25"/> <!-- Default 0.25 (25cm) -->
+        <param name="legs_end" value="0.65"/> <!-- Default 0.60 (60cm) -->
+        <param name="trunk_begin" value="0.66"/> <!-- Default 0.8 (80cm) -->
+        <param name="trunk_end" value="2.00"/> <!-- Default 1.50 (150cm) -->
+        
+        <param name="topic_pub_people" value="/People_PC"/> <!-- Default "/People_PC" -->
+        <param name="topic_pub_legs" value="/Legs_PC"/> <!-- Default "/Legs_PC" -->
+        <param name="topic_pub_trunk" value="/Trunk_PC"/> <!-- Default "/Trunk_PC" -->
+        <param name="sensor_topic_sub" value="/velodyne_points"/> <!-- Default "/velodyne_points" -->
+        <param name="pose_topic_sub" value="/amcl_pose"/> <!-- Default "/amcl_pose" -->
+        <param name="map_topic_sub" value="/map"/> <!-- Default "/map" -->
+        <param name="frame_id" value="map"/> <!-- Default "map" -->        
+    </node> 
+ 
+
+
+
+</launch>
